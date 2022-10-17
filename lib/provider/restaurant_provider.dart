@@ -14,6 +14,7 @@ class RestaurantProvider extends ChangeNotifier {
   String _message = '';
 
   RestaurantProvider({required this.apiService}) {
+    print('const');
     fetchAllRestaurant();
   }
 

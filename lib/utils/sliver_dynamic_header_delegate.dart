@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  SliverAppBarDelegate({
+class SliverDynamicHeaderDelegate extends SliverPersistentHeaderDelegate {
+  SliverDynamicHeaderDelegate({
     required this.minHeight,
     required this.maxHeight,
     required this.child,
@@ -24,7 +24,7 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => minHeight;
 
   @override
-  bool shouldRebuild(SliverAppBarDelegate oldDelegate) {
+  bool shouldRebuild(SliverDynamicHeaderDelegate oldDelegate) {
     return maxHeight != oldDelegate.maxHeight ||
         minHeight != oldDelegate.minHeight ||
         child != oldDelegate.child;

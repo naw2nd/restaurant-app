@@ -19,6 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   startSplashScreenTimer() async {
+    print('screen');
     var duration = const Duration(seconds: 2);
     return Timer(duration, navigationToNextPage);
   }
@@ -45,3 +46,4 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+
