@@ -1,17 +1,22 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_app/data/api/api_service.dart';
 import 'package:restaurant_app/data/model/drink.dart';
 import 'package:restaurant_app/data/model/food.dart';
+import 'package:restaurant_app/data/model/response.dart';
 import 'package:restaurant_app/data/model/restaurant.dart';
-import 'package:restaurant_app/sliver_appbar_delegate.dart';
+import 'package:restaurant_app/provider/restaurant_provider.dart';
+import 'package:restaurant_app/ui/customer_review_page.dart';
+import 'package:restaurant_app/utils/sliver_appbar_delegate.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
   static const routeName = '/restaurant_detail';
 
-  final Restaurant restaurant;
+  final String restaurantId;
 
-  const RestaurantDetailPage({Key? key, required this.restaurant})
+  const RestaurantDetailPage({Key? key, required this.restaurantId})
       : super(key: key);
 
   @override
@@ -24,38 +29,83 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
+    return Consumer<RestaurantProvider>(builder: (context, value, _) {
+      if (value.state == ResultState.loading) {
+        return const Scaffold(
+            body: Center(
+          child: CircularProgressIndicator(),
+        ));
+      } else if (value.state == ResultState.hasData) {
+        RestaurantDetailResponse response = value.restaurant;
+        RestaurantDetail restaurant = response.restaurant;
+        return Stack(
           children: [
-            SizedBox(
-              height: 300,
-              child: Hero(
-                tag: widget.restaurant.pictureId,
-                child: Image.network(
-                  widget.restaurant.pictureId,
-                  fit: BoxFit.cover,
+            Column(
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: Hero(
+                    tag: restaurant.pictureId,
+                    child: Image.network(
+                      '$baseUrl/images/large/${restaurant.pictureId}',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-              ),
+                Expanded(
+                  child: Container(
+                    color: Colors.white,
+                  ),
+                )
+              ],
             ),
-            Expanded(
-              child: Container(
-                color: Colors.white,
-              ),
-            )
+            Container(
+              height: 300,
+              color: Colors.black26,
+            ),
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              appBar: _buildMainAppBar(context),
+              body: _buildMainBody(context, restaurant),
+            ),
           ],
-        ),
-        Container(
-          height: 300,
-          color: Colors.black26,
-        ),
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: _buildMainAppBar(context),
-          body: _buildMainBody(context),
-        ),
-      ],
-    );
+        );
+      } else if (value.state == ResultState.noData) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.store_rounded,
+                color: Colors.black12,
+                size: 100,
+              ),
+              Text(
+                'Sorry, we cant find your restaurant..',
+                style: Theme.of(context)
+                    .textTheme
+                    .headline6!
+                    .copyWith(color: Colors.black12),
+              )
+            ],
+          ),
+        );
+      } else if (value.state == ResultState.error) {
+        return Scaffold(
+            body: Center(
+                child: Text(
+          value.message,
+          style: Theme.of(context)
+              .textTheme
+              .headline6!
+              .copyWith(color: Colors.black12),
+        )));
+      } else {
+        return Scaffold(
+          body: Container(),
+        );
+      }
+    });
   }
 
   AppBar _buildMainAppBar(BuildContext context) {
@@ -119,7 +169,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     );
   }
 
-  NestedScrollView _buildMainBody(BuildContext context) {
+  NestedScrollView _buildMainBody(
+      BuildContext context, RestaurantDetail restaurant) {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) {
         return [
@@ -145,7 +196,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                     topRight: Radius.circular(30),
                   ),
                 ),
-                child: _buildMainContent(context),
+                child: _buildMainContent(context, restaurant),
               ),
             ),
           ),
@@ -156,8 +207,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               crossAxisSpacing: 30,
               crossAxisCount: 2,
               children: _selectedMenuType == 'foods'
-                  ? widget.restaurant.menu.foods.map(_buildTile).toList()
-                  : widget.restaurant.menu.drinks.map(_buildTile).toList(),
+                  ? restaurant.menu.foods.map(_buildTile).toList()
+                  : restaurant.menu.drinks.map(_buildTile).toList(),
             ),
           )
         ],
@@ -165,7 +216,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     );
   }
 
-  Column _buildMainContent(BuildContext context) {
+  Column _buildMainContent(BuildContext context, RestaurantDetail restaurant) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -194,7 +245,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.restaurant.name,
+                      restaurant.name,
+                      maxLines: 2,
                       style: Theme.of(context)
                           .textTheme
                           .headline5!
@@ -203,34 +255,51 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                     Row(
                       children: [
                         const Icon(
-                          Icons.star_rounded,
-                          size: 20,
-                          color: Color(0xfffa8c0a),
-                        ),
-                        Text(
-                          '${widget.restaurant.rating} |',
-                        ),
-                        const Icon(
                           Icons.location_pin,
                           size: 20,
                           color: Color(0xff6ccc2c),
                         ),
-                        Text(widget.restaurant.city),
+                        Text(restaurant.city),
                       ],
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(width: 1, color: Colors.black12),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  side: const BorderSide(color: Colors.black26),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.store_rounded,
-                  color: Colors.black45,
-                  size: 30,
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    CustomerReviewPage.routeName,
+                    arguments: restaurant.id,
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 30,
+                      color: Color(0xfffa8c0a),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${restaurant.rating}',
+                        ),
+                        Text(
+                          'rating',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -251,7 +320,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.only(right: 10),
                   child: Text(
-                    widget.restaurant.description,
+                    restaurant.description,
                     style: Theme.of(context).textTheme.caption,
                     textAlign: TextAlign.justify,
                   ),
@@ -352,11 +421,13 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
         const SizedBox(
           height: 5,
         ),
-        Text(
-          menuItem.name,
-          style: Theme.of(context).textTheme.subtitle2,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        Flexible(
+          child: Text(
+            menuItem.name,
+            style: Theme.of(context).textTheme.subtitle2,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

@@ -1,8 +1,12 @@
 import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_app/data/api/api_service.dart';
 import 'package:restaurant_app/data/model/restaurant.dart';
+import 'package:restaurant_app/provider/restaurant_provider.dart';
 import 'package:restaurant_app/ui/restaurant_detail_page.dart';
+
 
 class RestaurantItem extends StatefulWidget {
   final Restaurant restaurant;
@@ -28,8 +32,10 @@ class _RestaurantItemState extends State<RestaurantItem> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
+            Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurantDetail(widget.restaurant.id);
+
             Navigator.pushNamed(context, RestaurantDetailPage.routeName,
-                arguments: widget.restaurant);
+                arguments: widget.restaurant.id);
           },
           child: Padding(
             padding:
@@ -42,7 +48,7 @@ class _RestaurantItemState extends State<RestaurantItem> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Image.network(
-                      widget.restaurant.pictureId,
+                      '$baseUrl/images/small/${widget.restaurant.pictureId}',
                       height: 100,
                       width: 110,
                       fit: BoxFit.cover,

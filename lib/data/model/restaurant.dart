@@ -1,4 +1,5 @@
-import 'dart:convert';
+import 'package:restaurant_app/data/model/category.dart';
+import 'package:restaurant_app/data/model/customer_review.dart';
 
 import 'menu.dart';
 
@@ -10,7 +11,6 @@ class Restaurant {
     required this.pictureId,
     required this.city,
     required this.rating,
-    required this.menu,
   });
 
   String id;
@@ -19,7 +19,6 @@ class Restaurant {
   String pictureId;
   String city;
   double rating;
-  Menu menu;
 
   factory Restaurant.fromJson(Map<String, dynamic> json) => Restaurant(
         id: json["id"],
@@ -28,7 +27,6 @@ class Restaurant {
         pictureId: json["pictureId"],
         city: json["city"],
         rating: json["rating"].toDouble(),
-        menu: Menu.fromJson(json["menus"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -38,25 +36,39 @@ class Restaurant {
         "pictureId": pictureId,
         "city": city,
         "rating": rating,
-        "menus": menu.toJson(),
       };
-
-  
 }
 
-List<Restaurant> parseRestaurant(String? json) {
+class RestaurantDetail extends Restaurant {
+  Menu menu;
+  List<Category> categories;
+  List<CustomerReview> customerReviews;
+  String address;
+  RestaurantDetail({
+    required super.id,
+    required super.name,
+    required super.description,
+    required super.pictureId,
+    required super.city,
+    required super.rating,
+    required this.menu,
+    required this.address,
+    required this.customerReviews,
+    required this.categories,
+  });
 
-  if (json == null) {
-    return [];
-  }
-
-  var decodedJson = jsonDecode(json);
-
-  final List parsed = decodedJson["restaurants"];
-
-  return parsed.map((json) => Restaurant.fromJson(json)).toList();
+  factory RestaurantDetail.fromJson(Map<String, dynamic> json) => RestaurantDetail(
+        id: json["id"],
+        name: json["name"],
+        description: json["description"],
+        city: json["city"],
+        address: json["address"],
+        pictureId: json["pictureId"],
+        categories: List<Category>.from(
+            json["categories"].map((x) => Category.fromJson(x))),
+        menu: Menu.fromJson(json["menus"]),
+        rating: json["rating"].toDouble(),
+        customerReviews: List<CustomerReview>.from(
+            json["customerReviews"].map((x) => CustomerReview.fromJson(x))),
+      );
 }
-
-
-
-

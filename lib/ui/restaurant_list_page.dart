@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:restaurant_app/data/model/restaurant.dart';
-import 'package:restaurant_app/styles.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant_app/data/model/response.dart';
+import 'package:restaurant_app/common/styles.dart';
+import 'package:restaurant_app/provider/restaurant_provider.dart';
 import 'package:restaurant_app/ui/widget/restaurant_item.dart';
 
 class RestaurantListPage extends StatefulWidget {
-  static const routeName = 'restaurant_list';
+  static const routeName = '/restaurant_list';
 
   const RestaurantListPage({Key? key}) : super(key: key);
 
@@ -16,7 +18,6 @@ class RestaurantListPage extends StatefulWidget {
 
 class _RestaurantListPageState extends State<RestaurantListPage> {
   final TextEditingController _tecSearch = TextEditingController();
-  String _searchValue = '';
 
   @override
   void dispose() {
@@ -116,9 +117,13 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
                       ),
                     ),
                     onChanged: (value) {
-                      setState(() {
-                        _searchValue = value.toLowerCase();
-                      });
+                      if (value.isNotEmpty) {
+                        Provider.of<RestaurantProvider>(context, listen: false)
+                            .fetchSearchedRestaurant(value);
+                      } else {
+                        Provider.of<RestaurantProvider>(context, listen: false)
+                            .fetchAllRestaurant();
+                      }
                     },
                   ),
                 ),
@@ -146,13 +151,19 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
     );
   }
 
-  FutureBuilder<String> _buildRestaurantList(BuildContext context) {
-    return FutureBuilder<String>(
-      future: DefaultAssetBundle.of(context)
-          .loadString('assets/json/local_restaurant.json'),
-      builder: (context, snapshot) {
-        List<Restaurant> restaurants = parseRestaurant(snapshot.data);
-        if (restaurants.isEmpty) {
+  Widget _buildRestaurantList(BuildContext context) {
+    return Consumer<RestaurantProvider>(
+      builder: (context, value, _) {
+        if (value.state == ResultState.loading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (value.state == ResultState.hasData) {
+          RestaurantListResponse response = value.restaurants;
+          return ListView(
+            children: response.restaurants
+                .map((restaurant) => RestaurantItem(restaurant: restaurant))
+                .toList(),
+          );
+        } else if (value.state == ResultState.noData) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -172,23 +183,20 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
               ],
             ),
           );
+        } else if (value.state == ResultState.error) {
+          return Center(
+              child: Text(
+            value.message,
+            style: Theme.of(context)
+                .textTheme
+                .headline6!
+                .copyWith(color: Colors.black12),
+          ));
+        } else {
+          return const Center(
+            child: Text(''),
+          );
         }
-        List<Restaurant> filteredRestaurant = [];
-        if (_searchValue != '') {
-          for (Restaurant restaurant in restaurants) {
-            if (restaurant.name.toLowerCase().contains(_searchValue)) {
-              filteredRestaurant.add(restaurant);
-            }
-          }
-          restaurants = filteredRestaurant;
-        }
-
-        return ListView.builder(
-          itemCount: restaurants.length,
-          itemBuilder: (context, index) {
-            return RestaurantItem(restaurant: restaurants[index]);
-          },
-        );
       },
     );
   }
