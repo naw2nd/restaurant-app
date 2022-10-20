@@ -4,21 +4,14 @@ import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/data/api/api_service.dart';
 import 'package:restaurant_app/data/model/restaurant.dart';
+import 'package:restaurant_app/provider/database_provider.dart';
 import 'package:restaurant_app/provider/restaurant_provider.dart';
 import 'package:restaurant_app/ui/restaurant_detail_page.dart';
 
-
-class RestaurantItem extends StatefulWidget {
+class RestaurantItem extends StatelessWidget {
   final Restaurant restaurant;
-  const RestaurantItem({Key? key, required this.restaurant}) : super(key: key);
 
-  @override
-  State<RestaurantItem> createState() => _RestaurantItemState();
-}
-
-class _RestaurantItemState extends State<RestaurantItem> {
-  bool isLiked = false;
-  Color favColor = const Color(0xffdc1339);
+  const RestaurantItem({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +25,11 @@ class _RestaurantItemState extends State<RestaurantItem> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
-            Provider.of<RestaurantProvider>(context, listen: false).fetchRestaurantDetail(widget.restaurant.id);
+            Provider.of<RestaurantProvider>(context, listen: false)
+                .fetchRestaurantDetail(restaurant.id);
 
             Navigator.pushNamed(context, RestaurantDetailPage.routeName,
-                arguments: widget.restaurant.id);
+                arguments: restaurant.id);
           },
           child: Padding(
             padding:
@@ -44,11 +38,11 @@ class _RestaurantItemState extends State<RestaurantItem> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Hero(
-                  tag: widget.restaurant.pictureId,
+                  tag: restaurant.pictureId,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Image.network(
-                      '$baseUrl/images/small/${widget.restaurant.pictureId}',
+                      '$baseUrl/images/small/${restaurant.pictureId}',
                       height: 100,
                       width: 110,
                       fit: BoxFit.cover,
@@ -64,7 +58,7 @@ class _RestaurantItemState extends State<RestaurantItem> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.restaurant.name,
+                        restaurant.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -80,7 +74,7 @@ class _RestaurantItemState extends State<RestaurantItem> {
                             color: Color(0xff6ccc2c),
                           ),
                           Expanded(
-                            child: Text(widget.restaurant.city),
+                            child: Text(restaurant.city),
                           ),
                         ],
                       ),
@@ -95,7 +89,7 @@ class _RestaurantItemState extends State<RestaurantItem> {
                             color: Color(0xfffa8c0a),
                           ),
                           Expanded(
-                            child: Text(widget.restaurant.rating.toString()),
+                            child: Text(restaurant.rating.toString()),
                           ),
                         ],
                       ),
@@ -104,36 +98,39 @@ class _RestaurantItemState extends State<RestaurantItem> {
                 ),
                 Column(
                   children: [
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: !isLiked
-                            ? Colors.transparent
-                            : favColor.withAlpha(10),
-                        padding: const EdgeInsets.all(10),
-                        minimumSize: Size.zero,
-                        side: BorderSide(
-                            width: 1,
-                            color: !isLiked
-                                ? Colors.black12
-                                : favColor.withAlpha(12)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          isLiked = !isLiked;
-                        });
-                      },
-                      child: !isLiked
-                          ? const Icon(
-                              EvaIcons.heartOutline,
-                              color: Colors.black38,
-                            )
-                          : Icon(
-                              EvaIcons.heart,
-                              color: favColor,
+                    Consumer<DatabaseProvider>(
+                      builder: (context, provider, _) {
+                        return OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            padding: const EdgeInsets.all(10),
+                            minimumSize: Size.zero,
+                            side: const BorderSide(
+                                width: 1, color: Colors.black12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                          ),
+                          onPressed: () async {
+                            bool isLiked =
+                                await provider.isFavourited(restaurant.id);
+                            if (!isLiked) {
+                              provider.addFavourite(restaurant.id);
+                            } else {
+                              provider.removeFavourite(restaurant.id);
+                            }
+                          },
+                          child: provider.favourites.contains(restaurant.id)
+                              ? const Icon(
+                                  EvaIcons.heart,
+                                  color: Color(0xffdc1339),
+                                )
+                              : const Icon(
+                                  EvaIcons.heartOutline,
+                                  color: Colors.black38,
+                                ),
+                        );
+                      },
                     ),
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(

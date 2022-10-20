@@ -1,11 +1,18 @@
+import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/data/model/response.dart';
 import 'package:restaurant_app/common/styles.dart';
-import 'package:restaurant_app/provider/restaurant_provider.dart';
+import 'package:restaurant_app/data/model/restaurant.dart';
+import 'package:restaurant_app/provider/home_provider.dart';
+import 'package:restaurant_app/provider/preference_provider.dart';
+import 'package:restaurant_app/provider/restaurant_provider.dart' as rp;
+import 'package:restaurant_app/ui/favourite_page.dart';
+import 'package:restaurant_app/ui/restaurant_detail_page.dart';
 import 'package:restaurant_app/ui/widget/restaurant_item.dart';
+import 'package:restaurant_app/utils/notification_helper.dart';
+import 'package:restaurant_app/utils/schedule_service.dart';
 
 class RestaurantListPage extends StatefulWidget {
   static const routeName = '/restaurant_list';
@@ -18,11 +25,26 @@ class RestaurantListPage extends StatefulWidget {
 
 class _RestaurantListPageState extends State<RestaurantListPage> {
   final TextEditingController _tecSearch = TextEditingController();
+  @override
+  void initState() {
+    _configureSelectNotificationSubject();
+    super.initState();
+  }
 
   @override
   void dispose() {
+    selectNotificationStream.close();
     _tecSearch.dispose();
     super.dispose();
+  }
+
+  void _configureSelectNotificationSubject() {
+    selectNotificationStream.stream.listen((String? payload) async {
+      Provider.of<rp.RestaurantProvider>(context, listen: false)
+          .fetchRestaurantDetail(payload ?? '');
+      Navigator.pushNamed(context, RestaurantDetailPage.routeName,
+          arguments: payload);
+    });
   }
 
   @override
@@ -33,43 +55,34 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
         titleSpacing: 20,
         title: const Text('BaratieApp'),
         actions: [
-          Center(
-            child: Container(
-              height: 40,
-              margin: const EdgeInsets.only(right: 20),
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: greenSecondary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {},
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        FeatherIcons.shoppingCart,
-                        color: primaryColor,
-                        size: 20,
-                      ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        '0',
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            color: primaryColor,
-                            fontSize: 18),
-                      ),
-                    ],
-                  ),
-                ),
+          Consumer<PreferencesProvider>(builder: (context, provider, _) {
+            return IconButton(
+              onPressed: () {
+                scheduleReminder(provider, context);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    duration: const Duration(seconds: 1),
+                    content: Text(
+                        'Notification turned ${!provider.reminder ? 'on, daily at 10 AM' : 'off'}')));
+              },
+              icon: Icon(
+                provider.reminder ? EvaIcons.bell : EvaIcons.bellOffOutline,
+                color: greenSecondary,
               ),
+            );
+          }),
+          IconButton(
+            onPressed: () {
+              Provider.of<HomeProvider>(context, listen: false)
+                  .fetchAllRestaurant('');
+              Navigator.pushNamed(context, FavouritePage.routeName);
+            },
+            icon: Icon(
+              EvaIcons.heart,
+              color: greenSecondary,
             ),
+          ),
+          const SizedBox(
+            width: 10,
           ),
         ],
       ),
@@ -117,13 +130,8 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
                       ),
                     ),
                     onChanged: (value) {
-                      if (value.isNotEmpty) {
-                        Provider.of<RestaurantProvider>(context, listen: false)
-                            .fetchSearchedRestaurant(value);
-                      } else {
-                        Provider.of<RestaurantProvider>(context, listen: false)
-                            .fetchAllRestaurant();
-                      }
+                      Provider.of<HomeProvider>(context, listen: false)
+                          .fetchAllRestaurant(value);
                     },
                   ),
                 ),
@@ -151,19 +159,36 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
     );
   }
 
+  Future<void> scheduleReminder(
+      PreferencesProvider provider, BuildContext context) async {
+    provider.setReminder(!provider.reminder);
+    _tecSearch.clear();
+    ScheduleService scheduleService = ScheduleService();
+    if (!provider.reminder) {
+      Restaurant promotedRestaurant =
+          await Provider.of<HomeProvider>(context, listen: false)
+              .getPromotedRestaurant();
+      int dailyNotificationHour = 10;
+      scheduleService.scheduleDailyNotification(
+          dailyNotificationHour, promotedRestaurant);
+    } else {
+      scheduleService.cancelAllSceduledNotification();
+    }
+  }
+
   Widget _buildRestaurantList(BuildContext context) {
-    return Consumer<RestaurantProvider>(
+    return Consumer<HomeProvider>(
       builder: (context, value, _) {
-        if (value.state == ResultState.loading) {
+        if (value.state == StateHP.loading) {
           return const Center(child: CircularProgressIndicator());
-        } else if (value.state == ResultState.hasData) {
+        } else if (value.state == StateHP.hasData) {
           RestaurantListResponse response = value.restaurants;
           return ListView(
             children: response.restaurants
                 .map((restaurant) => RestaurantItem(restaurant: restaurant))
                 .toList(),
           );
-        } else if (value.state == ResultState.noData) {
+        } else if (value.state == StateHP.noData) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -183,7 +208,7 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
               ],
             ),
           );
-        } else if (value.state == ResultState.error) {
+        } else if (value.state == StateHP.error) {
           return Center(
               child: Text(
             value.message,

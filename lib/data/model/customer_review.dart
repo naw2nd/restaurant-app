@@ -1,4 +1,3 @@
-
 class CustomerReview {
   CustomerReview({
     required this.name,

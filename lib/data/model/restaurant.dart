@@ -57,7 +57,8 @@ class RestaurantDetail extends Restaurant {
     required this.categories,
   });
 
-  factory RestaurantDetail.fromJson(Map<String, dynamic> json) => RestaurantDetail(
+  factory RestaurantDetail.fromJson(Map<String, dynamic> json) =>
+      RestaurantDetail(
         id: json["id"],
         name: json["name"],
         description: json["description"],

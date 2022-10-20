@@ -37,17 +37,17 @@ class CustomerReviewPage extends StatelessWidget {
       ),
       body: Consumer<RestaurantProvider>(
         builder: (context, value, child) {
-          if (value.state == ResultState.loading) {
+          if (value.state == StateRP.loading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (value.state == ResultState.hasData) {
+          } else if (value.state == StateRP.hasData) {
             RestaurantDetailResponse response = value.restaurant;
             return ListView(
               children: response.restaurant.customerReviews
                   .map(
                     (review) => ListTile(
                       horizontalTitleGap: 15,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 7),
                       leading: const Icon(
                         Icons.person_rounded,
                         size: 40,
@@ -57,7 +57,11 @@ class CustomerReviewPage extends StatelessWidget {
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(child: Text(review.name, overflow: TextOverflow.ellipsis,)),
+                          Expanded(
+                              child: Text(
+                            review.name,
+                            overflow: TextOverflow.ellipsis,
+                          )),
                           Text(
                             review.date,
                             style: const TextStyle(
@@ -71,7 +75,7 @@ class CustomerReviewPage extends StatelessWidget {
                   )
                   .toList(),
             );
-          } else if (value.state == ResultState.noData) {
+          } else if (value.state == StateRP.noData) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -91,7 +95,7 @@ class CustomerReviewPage extends StatelessWidget {
                 ],
               ),
             );
-          } else if (value.state == ResultState.error) {
+          } else if (value.state == StateRP.error) {
             return Center(
               child: Material(
                 child: Text(value.message),
