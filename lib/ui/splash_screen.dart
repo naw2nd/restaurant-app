@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/common/styles.dart';
@@ -24,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   bool isAppLaunchedByNotification = false;
   void _navigationToNextPage() {
     Navigator.pushReplacementNamed(context, RestaurantListPage.routeName);
-    _initScheduler();
+    _initScheduler(11);
 
     if (isAppLaunchedByNotification) {
       Provider.of<RestaurantProvider>(context, listen: false)
@@ -40,12 +39,12 @@ class _SplashScreenState extends State<SplashScreen> {
         await notificationHelper.isAppLaunchedByNotification();
   }
 
-  _initScheduler() async {
+  _initScheduler(int hour) async {
     ScheduleService scheduleService = ScheduleService();
     Restaurant restaurant =
         await Provider.of<HomeProvider>(context, listen: false)
             .getPromotedRestaurant();
-    scheduleService.scheduledFormPreference(10, restaurant);
+    scheduleService.scheduledFormPreference(hour, restaurant);
   }
 
   _startSplashScreenTimer() async {

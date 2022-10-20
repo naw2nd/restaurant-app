@@ -9,9 +9,9 @@ enum StateHP { loading, noData, hasData, error }
 class HomeProvider extends ChangeNotifier {
   final ApiService apiService;
   late RestaurantDetailResponse _restaurant;
-  late RestaurantListResponse _restaurants;
+  late RestaurantListResponse _restaurantsResponse;
   late StateHP _state;
-  late CustomerReviewResponse _customerReview;
+  late CustomerReviewResponse _customerReviewResponse;
   String _message = '';
 
   HomeProvider({required this.apiService}) {
@@ -20,8 +20,8 @@ class HomeProvider extends ChangeNotifier {
 
   String get message => _message;
   RestaurantDetailResponse get restaurant => _restaurant;
-  RestaurantListResponse get restaurants => _restaurants;
-  CustomerReviewResponse get customerReview => _customerReview;
+  RestaurantListResponse get restaurants => _restaurantsResponse;
+  CustomerReviewResponse get customerReview => _customerReviewResponse;
   StateHP get state => _state;
 
   Future<dynamic> fetchAllRestaurant(String query) async {
@@ -41,7 +41,7 @@ class HomeProvider extends ChangeNotifier {
       } else {
         _state = StateHP.hasData;
         notifyListeners();
-        return _restaurants = response;
+        return _restaurantsResponse = response;
       }
     } catch (e) {
       _state = StateHP.error;
@@ -63,25 +63,4 @@ class HomeProvider extends ChangeNotifier {
 
     return promotedRestaurant;
   }
-  // Future<dynamic> fetchSearchedRestaurant(String query) async {
-  //   try {
-  //     _state = ResultState.loading;
-  //     notifyListeners();
-  //     final response = await apiService.getSearchedRestaurant(query);
-  //     if (response.restaurants.isEmpty) {
-  //       _state = ResultState.noData;
-  //       notifyListeners();
-  //       return _message = 'No Restaurant Available';
-  //     } else {
-  //       _state = ResultState.hasData;
-  //       notifyListeners();
-  //       return _restaurants = response;
-  //     }
-  //   } catch (e) {
-  //     _state = ResultState.error;
-
-  //     notifyListeners();
-  //     return _message = 'Failed to load restaurant';
-  //   }
-  // }
 }

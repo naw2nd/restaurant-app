@@ -16,7 +16,6 @@ class FavouritePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // titleSpacing: 20,
         titleSpacing: 0,
         leading: IconButton(
           onPressed: () {

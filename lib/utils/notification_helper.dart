@@ -63,8 +63,6 @@ class NotificationHelper {
         0,
         receivedNotification.title,
         receivedNotification.body,
-        // _nextInstanceOfTenAM(),
-        // tz.TZDateTime.now(tz.local).add(const Duration(seconds: 2)),
         scheduledDate,
         const NotificationDetails(
             android: AndroidNotificationDetails(

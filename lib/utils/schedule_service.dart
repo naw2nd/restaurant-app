@@ -21,7 +21,7 @@ class ScheduleService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool reminded = prefs.getBool('REMINDER') ?? false;
     if (reminded) {
-      scheduleDailyNotification(10, restaurant);
+      scheduleDailyNotification(hour, restaurant);
     } else {
       cancelAllSceduledNotification();
     }
