@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant_app/common/styles.dart';
-import 'package:restaurant_app/data/model/restaurant.dart';
+import 'package:restaurant_app/data/model/received_notification.dart';
 import 'package:restaurant_app/provider/home_provider.dart';
+import 'package:restaurant_app/provider/preference_provider.dart';
 import 'package:restaurant_app/provider/restaurant_provider.dart';
 import 'package:restaurant_app/ui/restaurant_detail_page.dart';
 import 'package:restaurant_app/ui/restaurant_list_page.dart';
@@ -40,11 +41,27 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   _initScheduler(int hour) async {
+    ReceivedNotification notification;
     ScheduleService scheduleService = ScheduleService();
-    Restaurant restaurant =
-        await Provider.of<HomeProvider>(context, listen: false)
-            .getPromotedRestaurant();
-    scheduleService.scheduledFormPreference(hour, restaurant);
+    HomeProvider providerHome =
+        Provider.of<HomeProvider>(context, listen: false);
+    PreferencesProvider providerPrefs =
+        Provider.of<PreferencesProvider>(context, listen: false);
+    dynamic restaurant = await providerHome.getPromotedRestaurant();
+    // print(Provider.of<HomeProvider>(context, listen: false).state);
+    if (providerHome.state == StateHP.hasData) {
+      notification = ReceivedNotification(
+          title: 'Promo in ${restaurant.city} City',
+          body: 'Restaurant ${restaurant.name}',
+          payload: restaurant.id);
+      scheduleService.scheduledFormPreference(hour, notification);
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Notification has turned off because your device is not connected to internet!')));
+      providerPrefs.setReminder(false);
+    }
   }
 
   _startSplashScreenTimer() async {

@@ -1,5 +1,4 @@
 import 'package:restaurant_app/data/model/received_notification.dart';
-import 'package:restaurant_app/data/model/restaurant.dart';
 import 'package:restaurant_app/utils/notification_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // ignore: depend_on_referenced_packages
@@ -17,27 +16,22 @@ class ScheduleService {
 
   factory ScheduleService() => _instance ?? ScheduleService._internal();
 
-  scheduledFormPreference(int hour, Restaurant restaurant) async {
+  scheduledFormPreference(int hour, ReceivedNotification notification) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool reminded = prefs.getBool('REMINDER') ?? false;
     if (reminded) {
-      scheduleDailyNotification(hour, restaurant);
+      scheduleDailyNotification(hour, notification);
     } else {
       cancelAllSceduledNotification();
     }
   }
 
-  scheduleDailyNotification(int hour, Restaurant restaurant) {
+  scheduleDailyNotification(int hour, ReceivedNotification notification) {
     NotificationHelper notificationHelper = NotificationHelper();
 
     tz.TZDateTime scheduleTime = _nextInstanceOfHour(hour);
-    ReceivedNotification receivedNotification = ReceivedNotification(
-        title: 'Promo in ${restaurant.city} City',
-        body: 'Restaurant ${restaurant.name}',
-        payload: restaurant.id);
 
-    notificationHelper.scheduledNotification(
-        receivedNotification, scheduleTime);
+    notificationHelper.scheduledNotification(notification, scheduleTime);
   }
 
   cancelAllSceduledNotification() async {

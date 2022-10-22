@@ -55,12 +55,19 @@ class HomeProvider extends ChangeNotifier {
     return min + random.nextInt(max - min);
   }
 
-  Future<Restaurant> getPromotedRestaurant() async {
-    await fetchAllRestaurant('');
-    List<Restaurant> listRestaurant = restaurants.restaurants;
-    Restaurant promotedRestaurant =
-        listRestaurant[_next(0, listRestaurant.length - 1)];
-
-    return promotedRestaurant;
+  Future<dynamic> getPromotedRestaurant() async {
+    try {
+      RestaurantListResponse response =  await fetchAllRestaurant('');
+      List<Restaurant> listRestaurant = response.restaurants;
+      Restaurant promotedRestaurant =
+          listRestaurant[_next(0, listRestaurant.length - 1)];
+      _state = StateHP.hasData;
+      notifyListeners();
+      return promotedRestaurant;
+    } catch (e) {
+      _state = StateHP.error;
+      notifyListeners();
+      return _message = 'Failed to load restaurant';
+    }
   }
 }

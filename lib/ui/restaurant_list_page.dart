@@ -2,9 +2,9 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:restaurant_app/data/model/received_notification.dart';
 import 'package:restaurant_app/data/model/response.dart';
 import 'package:restaurant_app/common/styles.dart';
-import 'package:restaurant_app/data/model/restaurant.dart';
 import 'package:restaurant_app/provider/home_provider.dart';
 import 'package:restaurant_app/provider/preference_provider.dart';
 import 'package:restaurant_app/provider/restaurant_provider.dart' as rp;
@@ -57,15 +57,28 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
         actions: [
           Consumer<PreferencesProvider>(builder: (context, provider, _) {
             return IconButton(
-              onPressed: () {
-                scheduleReminder(provider, context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              onPressed: () async {
+                bool scheduled = await scheduleReminder(provider, context);
+                
+                if (scheduled) {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     duration: const Duration(seconds: 1),
                     content: Text(
-                        'Notification turned ${!provider.reminder ? 'on, daily at 10 AM' : 'off'}')));
+                        'Notification turned ${provider.reminder == true ? 'on, daily at 11 AM' : 'off'}'),
+                  ));
+                } else {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      duration: Duration(seconds: 1),
+                      content: Text(
+                          'Cannot set notification while device not connected to internet')));
+                }
               },
               icon: Icon(
-                provider.reminder ? EvaIcons.bell : EvaIcons.bellOffOutline,
+                provider.reminder == true
+                    ? EvaIcons.bell
+                    : EvaIcons.bellOffOutline,
                 color: greenSecondary,
               ),
             );
@@ -159,20 +172,36 @@ class _RestaurantListPageState extends State<RestaurantListPage> {
     );
   }
 
-  Future<void> scheduleReminder(
+  Future<bool> scheduleReminder(
       PreferencesProvider provider, BuildContext context) async {
-    provider.setReminder(!provider.reminder);
+    // provider.setReminder(!provider.reminder);
     _tecSearch.clear();
     ScheduleService scheduleService = ScheduleService();
-    if (!provider.reminder) {
-      Restaurant promotedRestaurant =
+    if (provider.reminder == false) {
+      HomeProvider providerHome =
+          Provider.of<HomeProvider>(context, listen: false);
+      dynamic restaurant =
           await Provider.of<HomeProvider>(context, listen: false)
               .getPromotedRestaurant();
-      int dailyNotificationHour = 10;
-      scheduleService.scheduleDailyNotification(
-          dailyNotificationHour, promotedRestaurant);
+      if (providerHome.state == StateHP.hasData) {
+        ReceivedNotification notification = ReceivedNotification(
+            title: 'Promo in ${restaurant.city} City',
+            body: 'Restaurant ${restaurant.name}',
+            payload: restaurant.id);
+        int dailyNotificationHour = 11;
+        scheduleService.scheduleDailyNotification(
+            dailyNotificationHour, notification);
+
+        provider.setReminder(true);
+        return true;
+      } else {
+        provider.setReminder(false);
+        return false;
+      }
     } else {
+      provider.setReminder(false);
       scheduleService.cancelAllSceduledNotification();
+      return true;
     }
   }
 

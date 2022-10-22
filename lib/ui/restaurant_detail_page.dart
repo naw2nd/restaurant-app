@@ -2,6 +2,7 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:restaurant_app/common/styles.dart';
 import 'package:restaurant_app/data/api/api_service.dart';
 import 'package:restaurant_app/data/model/response.dart';
 import 'package:restaurant_app/data/model/restaurant.dart';
@@ -124,14 +125,30 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
         );
       } else if (value.state == StateRP.error) {
         return Scaffold(
+            appBar: AppBar(
+              titleSpacing: 0,
+              leading: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: Icon(
+                  Icons.chevron_left_rounded,
+                  color: greenSecondary,
+                ),
+              ),
+              elevation: 0,
+              title: const Text(
+                'Restaurant Detail',
+              ),
+            ),
             body: Center(
                 child: Text(
-          value.message,
-          style: Theme.of(context)
-              .textTheme
-              .headline6!
-              .copyWith(color: Colors.black12),
-        )));
+              value.message,
+              style: Theme.of(context)
+                  .textTheme
+                  .headline6!
+                  .copyWith(color: Colors.black12),
+            )));
       } else {
         return Scaffold(
           body: Container(),
