@@ -1,16 +1,8 @@
 # restaurant_app
 
-A new Flutter project.
+This is submission project for Dicoding intermediate flutter class scholarship program from IDCamp
 
-## Getting Started
+![alt text](https://github.com/naw2nd/restaurant-app/blob/main/dicoding.png?raw=true)
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Overview
+This intermediate class finished less than two week (the deadline is more than a month) and rated 5 out of 5 star form the reviewer.
